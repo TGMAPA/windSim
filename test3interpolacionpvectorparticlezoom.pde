@@ -8,7 +8,7 @@ JSONArray dataU;
 JSONArray dataV; 
 int gridCols = 360;
 int gridRows = 181; 
-float scale;   
+float xscale, yscale;    
 PVector[][] vectorField;
 float maxMag, minMag;
 
@@ -26,9 +26,11 @@ PGraphics mapLayer;
 
 void setup() {
   
-  
   size(1600, 800);
-  scale = 4;
+  
+  xscale = width/ gridCols;
+  yscale = height/ gridRows;
+  
   
   offX = width / 2;
   offY = height / 2;
@@ -58,21 +60,20 @@ void setup() {
         float u = dataU.getFloat(idx);
         float v = dataV.getFloat(idx);
         vectorField[y][x] = new PVector(u, v);
-        particles[y][x]   = new Particle(x*scale, y*scale, vectorField[y][x].mag()*0.15, vectorField[y][x].mag() );
+        particles[y][x]   = new Particle(x*xscale, y*yscale, vectorField[y][x].mag()*0.15, vectorField[y][x].mag() );
       }
     }
   }
   
   
-  float[] MaxMin = getMinMaxMagnitude( vectorField, gridRows, gridCols);
+  float[] MaxMin = getMinMaxMagnitude( vectorField , gridRows, gridCols);
   minMag = MaxMin[0];
   maxMag = MaxMin[1];
-  
-  
   
   mapLayer = createGraphics(width, height);
   
   frameRate(40);
+  
   println("Inicialización finalizada...");
   println("MagMax       : "+maxMag);
   println("MinMax       : "+minMag);
@@ -80,7 +81,8 @@ void setup() {
   println("Rows         : "+gridRows);
   println("Screen_Widht : "+width);
   println("Screen_Height: "+height);
-  println("Scale        : "+scale);
+  println("XScale        : "+xscale);
+  println("YScale        : "+yscale);
 }  
 
 
@@ -132,8 +134,8 @@ void draw(){
 
 // Interpolación bilineal para obtener la dirección del viento
 PVector interpolateBilinear(float x, float y) {
-  int x0 = floor(x / scale);
-  int y0 = floor(y / scale);
+  int x0 = floor(x / xscale);
+  int y0 = floor(y / yscale);
   int x1 = x0 + 1;
   int y1 = y0 + 1;
 
@@ -143,8 +145,8 @@ PVector interpolateBilinear(float x, float y) {
   x1 = constrain(x1, 0, gridCols - 1);
   y1 = constrain(y1, 0, gridRows - 1);
 
-  float tx = (x / scale) - x0;
-  float ty = (y / scale) - y0;
+  float tx = (x / xscale) - x0;
+  float ty = (y / yscale) - y0;
 
   PVector v00 = vectorField[y0][x0];
   PVector v10 = vectorField[y0][x1];
@@ -159,7 +161,7 @@ PVector interpolateBilinear(float x, float y) {
 
 // Clase para partículas
 class Particle {
-
+  PVector pos0;
   float x0, y0;
   PVector pos;
   PVector vel;
@@ -178,10 +180,16 @@ class Particle {
     this.acc = new PVector();
     this.lifespan = lifespan;
     this.birthTime = millis() / 1000.0; // Guardar tiempo inicial en segundos
+    
     this.particleColor = new float[4];
 
     // Normaliza la magnitud en un rango entre 0 y 1
-    float normalizedMag = map(mag, minMag, maxMag, 0.0, 1.0);
+    float normalizedMag;
+    if (maxMag != minMag) {
+      normalizedMag = map(mag, minMag, maxMag, 0.0, 1.0);
+    } else {
+        normalizedMag = 0; // O algún valor por defecto
+    }
     
     // Determina el color basado en la magnitud
     if (normalizedMag > 0.95) {  // Mag alta
@@ -199,7 +207,12 @@ class Particle {
     }
     
     // Asigna transparencia basada en la magnitud
-    this.particleColor[3] = map(mag, minMag, maxMag, 0.0, 255.0);  // Alpha
+    if (maxMag != minMag) {
+      this.particleColor[3] = map(mag, minMag, maxMag, 0.0, 255.0);
+    } else {
+      this.particleColor[3] = 0;
+    }
+    
   }
 
   // Actualiza la posición de la partícula
@@ -235,23 +248,21 @@ class Particle {
     
     // Determina el color basado en la magnitud
     if (normalizedMag > 0.55) {  // Magnitud alta - Rojo
-        this.particleColor[0] = 255;  
-        this.particleColor[1] = 0;    
-        this.particleColor[2] = 0;    
+        this.particleColor[0] = 255;  // R
+        this.particleColor[1] = 0;    // G
+        this.particleColor[2] = 0;    // B
     } else if (normalizedMag > 0.10) {  // Magnitud moderada - Verde
-        this.particleColor[0] = 0;    
-        this.particleColor[1] = 255; 
-        this.particleColor[2] = 0;    
+        this.particleColor[0] = 0;    // R
+        this.particleColor[1] = 255;  // G
+        this.particleColor[2] = 0;    // B
     } else {  // Magnitud baja - Azul
-        this.particleColor[0] = 0;    
-        this.particleColor[1] = 0;  
-        this.particleColor[2] = 255; 
+        this.particleColor[0] = 0;    // R
+        this.particleColor[1] = 0;    // G
+        this.particleColor[2] = 255;  // B
     }
     
     // Asigna transparencia basada en la magnitud
     this.particleColor[3] = map(force.mag(), minMag, maxMag, 100, 255.0);  // Alpha
-    
-    
   }
 
   // Verifica el tiempo de vida de la partícula y la reinicia si es necesario
@@ -259,6 +270,7 @@ class Particle {
     float currentTime = millis() / 1000.0; // Tiempo actual en segundos
     if (currentTime - this.birthTime > this.lifespan) {
       // Reiniciar partícula
+      //this.pos = new PVector(random(width), random(height));
       this.pos = new PVector(this.x0, this.y0);
       this.vel.set(0, 0);
       this.acc.set(0, 0);
