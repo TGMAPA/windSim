@@ -26,10 +26,10 @@ PGraphics mapLayer;
 
 void setup() {
   
-  size(1600, 800);
+  size(1400, 800);
   
-  xscale = width/ gridCols;
-  yscale = height/ gridRows;
+  xscale = (float) width / gridCols;
+  yscale = (float) height / gridRows;
   
   
   offX = width / 2;
@@ -75,14 +75,14 @@ void setup() {
   frameRate(40);
   
   println("Inicialización finalizada...");
-  println("MagMax       : "+maxMag);
-  println("MinMax       : "+minMag);
-  println("Cols         : "+gridCols);
-  println("Rows         : "+gridRows);
-  println("Screen_Widht : "+width);
-  println("Screen_Height: "+height);
-  println("XScale        : "+xscale);
-  println("YScale        : "+yscale);
+  println("MagMax       : " + maxMag);
+  println("MinMax       : " + minMag);
+  println("Cols         : " + gridCols);
+  println("Rows         : " + gridRows);
+  println("Screen_Widht : " + width);
+  println("Screen_Height: " + height);
+  println("XScale        : "+ xscale);
+  println("YScale        : "+ yscale);
 }  
 
 
