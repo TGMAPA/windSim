@@ -8,11 +8,14 @@ JSONArray dataU;
 JSONArray dataV; 
 int gridCols = 360;
 int gridRows = 181; 
-float xscale, yscale;    
+
+float xscale, yscale;  
+
 PVector[][] vectorField;
 float maxMag, minMag;
 
 GeoMap geoMap;
+PImage earth;
 
 PeasyCam cam;
 float offX, offY;
@@ -26,10 +29,10 @@ PGraphics mapLayer;
 
 void setup() {
   
-  size(1400, 800);
+  size(1600, 800);
   
-  xscale = (float) width / gridCols;
-  yscale = (float) height / gridRows;
+  xscale = ((float) width / gridCols);
+  yscale = ((float) height / gridRows);
   
   
   offX = width / 2;
@@ -37,6 +40,10 @@ void setup() {
   
   geoMap = new GeoMap(this);  // Create the geoMap object.
   geoMap.readFile("world");   // Read shapefile.
+  
+  
+  earth = loadImage("test1.jpg");
+  earth.resize(width, height);
   
   String jsonString = join(loadStrings("current-wind-surface-level-gfs-1.0.json"), "");
   JSONArray json = JSONArray.parse(jsonString);
@@ -60,7 +67,7 @@ void setup() {
         float u = dataU.getFloat(idx);
         float v = dataV.getFloat(idx);
         vectorField[y][x] = new PVector(u, v);
-        particles[y][x]   = new Particle(x*xscale, y*yscale, vectorField[y][x].mag()*0.15, vectorField[y][x].mag() );
+        particles[y][x]   = new Particle(x*xscale, y*yscale, vectorField[y][x].mag()*0.09, vectorField[y][x].mag() );
       }
     }
   }
@@ -107,8 +114,13 @@ void draw(){
   
   mapLayer.beginDraw();
   mapLayer.noStroke();
-  mapLayer.fill(255,30); 
-  mapLayer.background(202, 226, 245, 20);
+  //mapLayer.fill(255,1); 
+  //mapLayer.background(202, 226, 245, 10 );
+  
+  
+  //mapLayer.fill(40,40, 40,0); 
+  mapLayer.fill(80,25); 
+  //mapLayer.background(100,100,100,150);
   mapLayer.rect(0, 0, width, height);
 
   for (int i=0; i< particles.length; i++){
@@ -123,9 +135,10 @@ void draw(){
   
   //fill(206,173,146, 50);
   //geoMap.draw();
+  
 
   mapLayer.endDraw();
-  
+  image(earth, 0, 0);
   image(mapLayer, 0, 0);
   
  
@@ -208,7 +221,7 @@ class Particle {
     
     // Asigna transparencia basada en la magnitud
     if (maxMag != minMag) {
-      this.particleColor[3] = map(mag, minMag, maxMag, 0.0, 255.0);
+      this.particleColor[3] = map(mag, minMag, maxMag, 100.0, 255.0);
     } else {
       this.particleColor[3] = 0;
     }
@@ -252,9 +265,13 @@ class Particle {
         this.particleColor[1] = 0;    // G
         this.particleColor[2] = 0;    // B
     } else if (normalizedMag > 0.10) {  // Magnitud moderada - Verde
-        this.particleColor[0] = 0;    // R
-        this.particleColor[1] = 255;  // G
-        this.particleColor[2] = 0;    // B
+        this.particleColor[0] = 30;    // R
+        this.particleColor[1] = 200;  // G
+        this.particleColor[2] = 39;    // B
+    } else if (normalizedMag > 0.2) {  // Magnitud moderada - Verde
+        this.particleColor[0] = 139;    // R
+        this.particleColor[1] = 205;  // G
+        this.particleColor[2] = 143;    // B
     } else {  // Magnitud baja - Azul
         this.particleColor[0] = 0;    // R
         this.particleColor[1] = 0;    // G
@@ -262,7 +279,7 @@ class Particle {
     }
     
     // Asigna transparencia basada en la magnitud
-    this.particleColor[3] = map(force.mag(), minMag, maxMag, 100, 255.0);  // Alpha
+    this.particleColor[3] = map(force.mag(), minMag, maxMag, 50, 255.0);  // Alpha
   }
 
   // Verifica el tiempo de vida de la partícula y la reinicia si es necesario
@@ -270,7 +287,6 @@ class Particle {
     float currentTime = millis() / 1000.0; // Tiempo actual en segundos
     if (currentTime - this.birthTime > this.lifespan) {
       // Reiniciar partícula
-      //this.pos = new PVector(random(width), random(height));
       this.pos = new PVector(this.x0, this.y0);
       this.vel.set(0, 0);
       this.acc.set(0, 0);
